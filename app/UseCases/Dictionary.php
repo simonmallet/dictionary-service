@@ -2,29 +2,41 @@
 
 namespace App\UseCases;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Entries;
 
 class Dictionary
 {
+    /**
+     * @var Entries
+     */
+    private $entries;
+
+    /**
+     * @param Entries $dbEntries
+     */
+    public function __construct(Entries $dbEntries)
+    {
+        $this->entries = $dbEntries;
+    }
+
     /**
      * @param string $word
      * @return array|null
      */
     public function find($word)
     {
-        $numEntries = Entries::where('word', $word)->count();
+        $numEntries = $this->entries->countWordOccurrences($word);
         if ($numEntries > 0) {
-            $wordDefinitions = Entries::where('word', $word)->get();
-            $totalWordsInFirstLetter = DB::select('select count(distinct(word)) as totalWords from entries where word like \''.$word{0}.'%\'');
-            $totalWordsInDictionary = DB::select('select count(distinct(word)) as totalWords from entries');
-            $wordInOtherDefinitions = DB::select('select word, wordtype,definition from entries where definition regexp \' '.$word.'[^a-zA-Z]\' order by word');
+            $wordDefinitions = $this->entries->getDefinitions($word);
+            $totalWordsInFirstLetter = $this->entries->countWordsInFirstLetter($word);
+            $totalWordsInDictionary = $this->entries->countTotalWordsInDictionary();
+            $wordInOtherDefinitions =$this->entries->getOtherWordsDefinitionWithSameWord($word);
 
             return [
                 'wordDefinitions' => $wordDefinitions,
                 'statistics' => [
-                    'totalWordsInFirstLetter' => $totalWordsInFirstLetter[0]->totalWords,
-                    'totalWordsInDictionary' => $totalWordsInDictionary[0]->totalWords,
+                    'totalWordsInFirstLetter' => $totalWordsInFirstLetter,
+                    'totalWordsInDictionary' => $totalWordsInDictionary,
                     'wordUsedInOtherDefinitions' => $wordInOtherDefinitions
                 ]
             ];
