@@ -58,6 +58,6 @@ class Entries extends Model
      */
     public function getOtherWordsDefinitionWithSameWord($word)
     {
-        return DB::select('select word, wordtype,definition from entries where definition regexp \' '.$word.'[^a-zA-Z]\' order by word');
+        return DB::select('select word, wordtype,definition from entries where definition regexp \' '.$word.'[^a-zA-Z]\' and word != \''.$word.'\' order by word,wordtype');
     }
 }
